@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Movimiento del Astronauta - Plano Cartesiano</title>
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(circle at center, #000010, #000000);
+      overflow: hidden;
+      text-align: center;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: url("https://tse2.mm.bing.net/th/id/OIP.a9slb-lB0ieTD095BA3RtQHaFg?w=1000&h=744&rs=1&pid=ImgDetMain&o=7&rm=3");
+      background-size: cover;
+      border: 2px solid #00ffcc;
+      border-radius: 10px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #00ffcc, #0066ff);
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.3s;
+    }
+    button:hover {
+      transform: scale(1.1);
+      background: linear-gradient(90deg, #00cc99, #0033cc);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h2>🚀 Movimiento del Astronauta en el Plano Cartesiano</h2>
+  <canvas id="canvas" width="800" height="600"></canvas>
+  <button id="resetBtn">🔄 Reiniciar Animación</button>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    // Conversión de coordenadas matemáticas a píxeles
+    const origin = {x: canvas.width/2, y: canvas.height/2};
+    const scale = 20; // escala de 1 unidad = 20 píxeles
+
+    // Posiciones
+    const posInicial = {x: 0, y: 0};
+    const posIntermedia = {x: -50, y: -9};
+    const posFinal = {x: 6, y: 10};
+
+    let progress = 0; // progreso de animación
+    let animating = true;
+
+    // Dibujar ejes cartesianos
+    function drawAxes() {
+      ctx.strokeStyle = "#00ffcc";
+      ctx.lineWidth = 1;
+
+      // Eje X
+      ctx.beginPath();
+      ctx.moveTo(0, origin.y);
+      ctx.lineTo(canvas.width, origin.y);
+      ctx.stroke();
+
+      // Eje Y
+      ctx.beginPath();
+      ctx.moveTo(origin.x, 0);
+      ctx.lineTo(origin.x, canvas.height);
+      ctx.stroke();
+
+      // Etiquetas de coordenadas
+      ctx.fillStyle = "white";
+      ctx.font = "12px Arial";
+      for (let i = -20; i <= 20; i++) {
+        // X
+        ctx.fillText(i, origin.x + i*scale, origin.y + 12);
+        // Y
+        if (i !== 0) ctx.fillText(-i, origin.x + 5, origin.y + i*scale);
+      }
+    }
+
+    // Dibujar vector (flecha)
+    function drawVector(from, to, color) {
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 2;
+
+      ctx.beginPath();
+      ctx.moveTo(origin.x + from.x*scale, origin.y - from.y*scale);
+      ctx.lineTo(origin.x + to.x*scale, origin.y - to.y*scale);
+      ctx.stroke();
+
+      // flecha
+      const angle = Math.atan2((from.y - to.y), (to.x - from.x));
+      const headlen = 10;
+      ctx.beginPath();
+      ctx.moveTo(origin.x + to.x*scale, origin.y - to.y*scale);
+      ctx.lineTo(origin.x + to.x*scale - headlen*Math.cos(angle - Math.PI/6),
+                 origin.y - to.y*scale + headlen*Math.sin(angle - Math.PI/6));
+      ctx.lineTo(origin.x + to.x*scale - headlen*Math.cos(angle + Math.PI/6),
+                 origin.y - to.y*scale + headlen*Math.sin(angle + Math.PI/6));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Dibujar astronauta
+    function drawAstronaut(pos) {
+      const x = origin.x + pos.x*scale;
+      const y = origin.y - pos.y*scale;
+      ctx.beginPath();
+      ctx.arc(x, y, 8, 0, Math.PI*2);
+      ctx.fillStyle = "orange";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(x, y-10, 5, 0, Math.PI*2); // casco
+      ctx.fillStyle = "white";
+      ctx.fill();
+    }
+
+    // Dibujar fuente de energía
+    function drawEnergySource() {
+      const x = origin.x + posFinal.x*scale;
+      const y = origin.y - posFinal.y*scale;
+      ctx.beginPath();
+      ctx.arc(x, y, 12, 0, Math.PI*2);
+      ctx.fillStyle = "lime";
+      ctx.fill();
+      ctx.strokeStyle = "yellow";
+      ctx.stroke();
+    }
+
+    function animate() {
+      if (!animating) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawAxes();
+      drawEnergySource();
+
+      // Movimiento en dos etapas
+      let currentPos = {x: 0, y: 0};
+
+      if (progress < 0.5) {
+        // de inicial a intermedia
+        const t = progress / 0.5;
+        currentPos.x = posInicial.x + (posIntermedia.x - posInicial.x) * t;
+        currentPos.y = posInicial.y + (posIntermedia.y - posInicial.y) * t;
+
+        drawVector(posInicial, posIntermedia, "cyan");
+      } else {
+        // de intermedia a final
+        const t = (progress - 0.5) / 0.5;
+        currentPos.x = posIntermedia.x + (posFinal.x - posIntermedia.x) * t;
+        currentPos.y = posIntermedia.y + (posFinal.y - posIntermedia.y) * t;
+
+        drawVector(posInicial, posIntermedia, "cyan");
+        drawVector(posIntermedia, posFinal, "magenta");
+      }
+
+      drawAstronaut(currentPos);
+
+      progress += 0.005; // velocidad
+      if (progress <= 1) {
+        requestAnimationFrame(animate);
+      }
+    }
+
+    // Botón de reinicio
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      progress = 0;
+      animating = true;
+      animate();
+    });
+
+    animate();
+  </script>
+</body>
+</html>
